@@ -35,7 +35,7 @@ build: build-agent build-connectivity_check build-inventory build-free_addresses
 build-%: $(BIN) src/$* #lint
 	CGO_ENABLED=0 go build -o $(BIN)/$* src/$*/main/main.go
 
-build-image: unit-test
+build-image: # unit-test
 	docker build ${CONTAINER_BUILD_PARAMS} -f Dockerfile.assisted_installer_agent . -t $(ASSISTED_INSTALLER_AGENT)
 
 push: build-image subsystem
@@ -59,7 +59,7 @@ endif
 unit-test:
 	$(MAKE) _test TEST_SCENARIO=unit TIMEOUT=30m TEST="$(or $(TEST),$(shell go list ./... | grep -v subsystem))" || (docker kill postgres && /bin/false)
 
-subsystem: build-image 
+subsystem: build-image
 	docker image rm subsystem_agent; \
 	$(DOCKER_COMPOSE) up --build -d dhcpd wiremock; \
 	$(MAKE) _test TEST_SCENARIO=subsystem TIMEOUT=30m TEST="$(or $(TEST),./subsystem/...)"; \

@@ -110,7 +110,9 @@ stderr:
 }
 
 func (s *stepSession) handleSteps(steps *models.Steps) {
+	s.Logger().Infof("Handling steps %s", steps)
 	for _, step := range steps.Instructions {
+		s.Logger().Infof("Handling step: %s", step)
 		if step.Command == "" {
 			errStr := "Missing command"
 			s.Logger().Warn(errStr)
@@ -137,6 +139,7 @@ func (s *stepSession) handleSteps(steps *models.Steps) {
 			s.sendStepReply(reply)
 		}(step)
 	}
+	s.Logger().Info("LOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOG")
 }
 
 // diagnoseSystem runs quick validations that need to need to occur before step and after a failure.
@@ -210,7 +213,10 @@ func (s *stepSession) processSingleSession() (int64, string) {
 	s.Logger().Info("Query for next steps")
 	result, err := s.serviceAPI.GetNextSteps(&s.InventorySession)
 	if err != nil {
+		s.Logger().Info("Get next step error not nil")
+		s.Logger().Info("Invalidating cache")
 		invalidateCache()
+		s.Logger().Info("cache invalidated")
 		switch errValue := err.(type) {
 		case *installer.V2GetNextStepsNotFound:
 			s.Logger().WithError(err).Errorf("Infra-env %s was not found in inventory or user is not authorized, going to sleep forever", config.GlobalAgentConfig.InfraEnvID)
@@ -223,6 +229,7 @@ func (s *stepSession) processSingleSession() (int64, string) {
 		default:
 			s.Logger().WithError(err).Warn("Could not query next steps")
 		}
+		s.Logger().Infof("%s", int64(config.GlobalAgentConfig.IntervalSecs))
 		return int64(config.GlobalAgentConfig.IntervalSecs), ""
 	}
 	s.handleSteps(result)
